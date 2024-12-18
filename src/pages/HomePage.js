@@ -1,46 +1,63 @@
 // frontend/src/pages/HomePage.js
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';  // Import useNavigate
-import { getRooms } from '../api/rooms';  // Import getRooms function
+import { useNavigate } from 'react-router-dom';
+import { getRooms } from '../api/rooms';
 import RoomCard from '../components/RoomCard';
+import Header from '../components/Header';
 
 function HomePage() {
   const [rooms, setRooms] = useState([]);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);  // Handle error state
-  const navigate = useNavigate();  // Use navigate for routing
+  const navigate = useNavigate();
 
   useEffect(() => {
-    async function fetchRooms() {
+    const fetchRooms = async () => {
       try {
-        const roomList = await getRooms();  // Get rooms from API
-        setRooms(roomList);  // Set the rooms state
+        setLoading(true);
+        const data = await getRooms();
+        console.log('Fetched rooms:', data);
+        setRooms(Array.isArray(data) ? data : []);
       } catch (error) {
-        setError('Error fetching rooms');  // Set error message if fetching fails
+        console.error('Error fetching rooms:', error);
+        setError(error.message || 'Error fetching rooms');
       } finally {
-        setLoading(false);  // Set loading to false once request completes
+        setLoading(false);
       }
-    }
+    };
 
     fetchRooms();
   }, []);
 
-  if (loading) return <div>Loading rooms...</div>;  // Display loading message
-  if (error) return <div>{error}</div>;  // Display error message
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
 
   return (
-    <div className="container">
-      <h2>Home</h2>
-      <div className="d-flex justify-content-between">
-        <h3>Your Rooms</h3>
-        <button className="btn btn-primary" onClick={() => navigate('/add-room')}>
-          Add Room
-        </button>
-      </div>
-      <div className="row">
-        {rooms.map((room) => (
-          <RoomCard key={room._id} room={room} />
-        ))}
+    <div>
+      <Header />
+      <div className="container mt-4">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <h2>My Rooms</h2>
+          <button
+            className="btn btn-primary"
+            onClick={() => navigate('/add-room')}
+          >
+            Add Room
+          </button>
+        </div>
+        <div className="row">
+          {rooms.length === 0 ? (
+            <div className="col-12 text-center">
+              <p>No rooms found. Add a room to get started!</p>
+            </div>
+          ) : (
+            rooms.map((room) => (
+              <div key={room._id} className="col-md-4 mb-4">
+                <RoomCard room={room} />
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
